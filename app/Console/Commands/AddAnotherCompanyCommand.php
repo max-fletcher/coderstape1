@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Company;
 
-class AddCompanyCommand extends Command
+class AddAnotherCompanyCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -14,14 +14,14 @@ class AddCompanyCommand extends Command
      */
 
     // This command accepts a name and phone as an argument. Phone is an optional argument though
-    protected $signature = 'contact:company {name} {phone?}';
+    protected $signature = 'contact:anothercompany';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Add a new company';
+    protected $description = 'Add another new company';
 
     /**
      * Create a new command instance.
@@ -40,19 +40,26 @@ class AddCompanyCommand extends Command
      */
     public function handle()
     {
-      // create a new company. Any argument passed can be accessed using $this->argument() method. It works
-      // like a bag (e.g request and session) so you need to say $this->argument('name'). If session has a
-      // phone number, then set it, but if not, set default value as N/A.
-      // Side note: If you used {phone=N/A} in signature, you wouldn't need to say
-      // 'phone' => $this->argument('phone') ?? 'N/A'. Just 'phone' => $this->argument('phone') will do
-        $company = Company::create([
-          'name' => $this->argument('name'),
-          'phone' => $this->argument('phone') ?? 'N/A',
-        ]);
+        $name = $this->ask('Enter Company Name: ');
+        $phone = $this->ask('Enter Company\'s Phone Number: ');
 
+        if($this->confirm( 'Are you ready to insert these values: Name - "'.$name.'" with Phone - "'.$phone.'" ?' )){
+          $company = Company::create([
+            'name' => $name,
+            'phone' => $phone,
+          ]);
+          // If user selects yes, then the new company is added
+          return $this->info('Added: '. $company->name);
+        }
+
+        // If the user selects no, then dislay a message and function ends
+        return $this->warn('No New Company Was Added');
+
+/*
         $this->info('Added: '. $company->name);
         $this->info('This is an info string');
         $this->warn('This is a warning string');
         $this->error('This is an error message');
+*/
     }
 }
