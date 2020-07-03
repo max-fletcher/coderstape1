@@ -45,17 +45,24 @@ class CustomersController extends Controller
     }
 
 // store method no longer requires you to declare a request object. However it is stil there. You will however,
-// need to follow some different conventions. Say you want to dd the name inside request. You will have to use
-// dd(request('name'));  instead of  dd($request->input('name'));  or  dd($request->name);
+// need to follow some different conventions. Say you want to dd the name inside request. You will have to
+// use dd(request('name'));  instead of  dd($request->input('name'));  or  dd($request->name);
     public function store(){
-// $data here contains the validated data. validateRequest is now a seprate function that contains validation logic
-// You could not do this line and say Customer::create($this->validateRequest()); instead if you don't mind the complexity
+// $data here contains the validated data. validateRequest is now a seprate function that contains validation
+// logic You could not do this line and say Customer::create($this->validateRequest()); instead if you don't
+// mind the complexity
         $data = $this->validateRequest();
+
+// Store image that comes with $customer if any exists. Basically we are using the storeImage() function
+// that is defined somewhere below. The logic inside storeimage() can be implemented here but its
+// shoved off in a separate function just to keep things clean
+        $this->storeImage($customer);
 
   // This is a new syntax for saving data to database. It is short form of the several lines code commented
   // out below. It takes the validated $data as a parameter and stores it. Its called mass assignemnt and doesn't
   // work if you don't use the fillable or guarded property in model to define the mass assignable fields
   // This method can also take an associative array BTW.
+
         $customer = Customer::create($data);
 
         event(new NewCustomerHasRegisteredEvent($customer));
@@ -126,7 +133,19 @@ class CustomersController extends Controller
         'email' => 'required|email',
         'active' => 'required',
         'company_id' => 'required',
+        'image' => 'sometimes|file|image|max:5000',
       ]);
     }
 
+    public function storeImage($customer){
+// If the request sent has an image file, then update the customer model with the new image file and store it
+// I believe this uses a laravel built in function that can automatically identify image classes in model
+// and update the database field with the respective name of the file. Uploads is the name of the folder
+// so path is App\Storage\uploads
+      if(request()->has('image')){
+        $customer->update([
+          'image' => request()->image->store('uploads', 'public'),
+        ]);
+      }
+    }
 }

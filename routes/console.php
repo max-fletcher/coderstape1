@@ -29,4 +29,7 @@ Artisan::command('contact:company-clean', function () {
     $company->delete();
     $this->warn('Deleted Company: ' . $company->name);
   });
+
+  $this->info('Done !! Cleaned Up Empty Companies');
+
 })->describe('Clean Up Unused Companies');

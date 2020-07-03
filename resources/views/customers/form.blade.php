@@ -12,10 +12,12 @@
     @enderror
   @endif
 </div>
+
 <div class="form-group">
   <label for="email"> Email </label>
   <input type="text" class="form-control" name="email" id="email" placeholder="Enter Email Address" value="{{ old('email') ?? $customer->email  }}">
 </div>
+
 <div class="form-group">
     <label for="active">Status</label>
     <select name="active" id="active" class="form-control">
@@ -26,6 +28,7 @@
         @endforeach
     </select>
 </div>
+
 <div class="form-group">
   <label for="company_id"> Company </label>
   <select class="form-control" name="company_id" id="company_id">
@@ -34,4 +37,12 @@
       <option value="{{ $company->id }}" {{ $company->id == $customer->company_id ? 'selected' : '' }}> {{ $company->name }} </option>
     @endforeach
   </select>
+</div>
+
+<div class="form-group d-flex flex-column">
+  <label for="image"> Profile Image </label>
+  <input type="file" name="image" id="image">
+  @error('name')
+    <div class="alert alert-danger mt-2"> {{ $errors->first('image') }} </div>
+  @enderror
 </div>
