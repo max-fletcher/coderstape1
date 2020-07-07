@@ -13,10 +13,9 @@
     </div>
   </div>
 
-  <a href="/customers/create" class="btn btn-primary"> Create Customer </a>
-
-  </button>
-
+  @can('create', App\Customer::class)
+    <a href="/customers/create" class="btn btn-primary"> Create Customer </a>
+  @endcan
   <div class="mt-3">
   <h2> Customers </h2>
 
@@ -30,10 +29,25 @@
   @foreach ($customers as $customer)
     <div class="row">
       <div class="col-2"> {{ $customer->id }} </div>
-      <div class="col-4"> <a href="/customers/{{ $customer->id }}/show"> {{ $customer->name }} </a> </div>
+      <div class="col-4">
+        @can('view', $customer)
+           <a href="{{ route('customers.show', ['customer' => $customer]) }}"> {{ $customer->name }} </a>
+        @endcan
+
+        @cannot('view', $customer)
+            {{ $customer->name }}
+        @endcannot
+      </div>
+
       <div class="col-4"> {{ $customer->email }} </div>
       <div class="col-2"> {{ $customer->active }} </div>
     </div>
   @endforeach
+
+<div class="row">
+  <div class="col-12 d-flex justify-content-center mt-4">
+    {{ $customers->links() }}
+  </div>
+</div>
 
 @endsection

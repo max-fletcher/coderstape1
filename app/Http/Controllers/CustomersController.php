@@ -8,16 +8,19 @@ use App\Company;
 use App\Events\NewCustomerHasRegisteredEvent;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeNewUserMail;
+use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\Storage;
 
 class CustomersController extends Controller
 {
 
     public function __construct(){
-        $this->middleware(['auth', 'verified'])->except(['index']);
+      $this->middleware(['auth', 'verified'])->except(['index']);
     }
 
     public function index(){
-      $customers = Customer::all();
+      // Using Eager Loading instead of Lazy Loading
+      $customers = Customer::with('company')->paginate(15);
 
       return view('customers.index')->with('customers', $customers);
     }
@@ -48,28 +51,31 @@ class CustomersController extends Controller
 // need to follow some different conventions. Say you want to dd the name inside request. You will have to
 // use dd(request('name'));  instead of  dd($request->input('name'));  or  dd($request->name);
     public function store(){
-// $data here contains the validated data. validateRequest is now a seprate function that contains validation
-// logic You could not do this line and say Customer::create($this->validateRequest()); instead if you don't
-// mind the complexity
+// Uses Gates and Policies. This is the CustomerPolicy
+      $this->authorize('create', Customer::class);
+// $data here contains the validated data. validateRequest is a seprate function defined below that contains
+// validation logic You could not do this line and say Customer::create($this->validateRequest()); instead
+// if you don't mind the complexity.
+// NOTE: This fucker contains a normal PHP array not a collection.
+// So it will fail most standard laravel functions e.g update, store etc.
         $data = $this->validateRequest();
+
+// This is a new syntax for saving data to database. It is short form of the several lines code commented
+// out below. It takes the validated $data as a parameter and stores it. Its called mass assignemnt and doesn't
+// work if you don't use the fillable or guarded property in model to define the mass assignable fields
+// This method can also take an associative array BTW.
+
+        $customer = Customer::create($data);
 
 // Store image that comes with $customer if any exists. Basically we are using the storeImage() function
 // that is defined somewhere below. The logic inside storeimage() can be implemented here but its
 // shoved off in a separate function just to keep things clean
         $this->storeImage($customer);
 
-  // This is a new syntax for saving data to database. It is short form of the several lines code commented
-  // out below. It takes the validated $data as a parameter and stores it. Its called mass assignemnt and doesn't
-  // work if you don't use the fillable or guarded property in model to define the mass assignable fields
-  // This method can also take an associative array BTW.
-
-        $customer = Customer::create($data);
-
-        event(new NewCustomerHasRegisteredEvent($customer));
 
   // This is an event. If this is triggered, will cause a bunch of lines inside listeners to execute. This
-  //accepts $data as a parameter so $data is being sent to it to be used.
-        //event(new NewCustomerHasRegistered($data));
+  //accepts $customer as a parameter so $customer is being sent to it to be used.
+        event(new NewCustomerHasRegisteredEvent($customer));
 
         /*
         $customer = new Customer();
@@ -111,20 +117,26 @@ class CustomersController extends Controller
       // uses route model binding. See above.
       // $data here contains the validated data
       $data = $this->validateRequest();
+      //delete previous image. Needs to be done before update and store new image.
+      Storage::delete('public/'.$customer->image);
       //update customer
       $customer->update($data);
+      // update Image
+      $this->storeImage($customer);
 
       return redirect('customers/'.$customer->id.'/show');
     }
 
     public function destroy(Customer $customer){
 
+      $this->authorize('delete', $customer);
       // uses route model binding. See above.
       // delete customer
       $customer->delete();
 
-      return redirect('customers');
+      return redirect('customers')->with('success', ' User Deleted Successfully !! ');
     }
+
 // This function is used to validate data. Use it if your forms are similar. Use the $this->validateRequest()
 // to call it
     public function validateRequest(){
@@ -142,10 +154,19 @@ class CustomersController extends Controller
 // I believe this uses a laravel built in function that can automatically identify image classes in model
 // and update the database field with the respective name of the file. Uploads is the name of the folder
 // so path is App\Storage\uploads
-      if(request()->has('image')){
-        $customer->update([
-          'image' => request()->image->store('uploads', 'public'),
-        ]);
-      }
+      if (request()->has('image')) {
+            $customer->update([
+                'image' => request()->image->store('uploads', 'public'),
+            ]);
+        }
+
+// Import "use Intervention\Image\Facades\Image;" to use intervention image after installing it.
+// Use the Image class and call the make function. Provide the make function with a URL/path to the image.
+// Then method chain it with fit to crop it to a certain size(width by height).
+// public_path() is a laravel helper function that can be used to generate a fully qualified url/path within
+// the laravel application you are developing.
+// Intervention Image has a lot of functions other than fit. It can crop as well. See docs for details
+      $image = Image::make(public_path('storage/'.$customer->image))->fit('300','300');
+      $image->save();
     }
 }

@@ -7,7 +7,7 @@
 @section('content')
 
 <div class="row">
-  <a class="btn btn-primary mr-2" href="/customers/{{ $customer->id }}/edit">Edit Customer </a>
+  <a class="btn btn-primary mr-2" href="{{ route('customers.edit', ['customer' => $customer]) }}"> Edit Customer </a>  
   <form class="" action="/customers/{{ $customer->id }}" method="post">
     @csrf
     @method('delete')
@@ -25,6 +25,15 @@
       <p><strong> Company Name: <strong> {{ $customer->company->name }} </p>
       <p><strong> Status: <strong> {{ $customer->active }} </p>
     </div>
+
+    @if($customer->image)
+      <div class="row">
+        <div class="col-12">
+          <img src="{{ asset('storage/'.$customer->image) }}" alt="" class="img-thumbnail">
+        </div>
+      </div>
+
+    @endif
 
   </div>
 
