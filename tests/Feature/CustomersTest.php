@@ -14,6 +14,7 @@ class CustomersTest extends TestCase
      *
      * @return void
      */
+    use  RefreshDatabase;
 
      public function testOnly_logged_in_users_can_see_detailed_customer_list()
      {
