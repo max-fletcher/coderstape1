@@ -51,7 +51,7 @@ class CustomersController extends Controller
 // need to follow some different conventions. Say you want to dd the name inside request. You will have to
 // use dd(request('name'));  instead of  dd($request->input('name'));  or  dd($request->name);
     public function store(){
-// Uses Gates and Policies. This is the CustomerPolicy
+// Uses Gates and Policies. This is the CustomerPolicy.
       $this->authorize('create', Customer::class);
 // $data here contains the validated data. validateRequest is a seprate function defined below that contains
 // validation logic You could not do this line and say Customer::create($this->validateRequest()); instead
@@ -139,7 +139,7 @@ class CustomersController extends Controller
 
 // This function is used to validate data. Use it if your forms are similar. Use the $this->validateRequest()
 // to call it
-    public function validateRequest(){
+    private function validateRequest(){
       return request()->validate([
         'name' => 'required|min:3',
         'email' => 'required|email',
@@ -149,7 +149,7 @@ class CustomersController extends Controller
       ]);
     }
 
-    public function storeImage($customer){
+    private function storeImage($customer){
 // If the request sent has an image file, then update the customer model with the new image file and store it
 // I believe this uses a laravel built in function that can automatically identify image classes in model
 // and update the database field with the respective name of the file. Uploads is the name of the folder
@@ -169,4 +169,5 @@ class CustomersController extends Controller
       $image = Image::make(public_path('storage/'.$customer->image))->fit('300','300');
       $image->save();
     }
+
 }
